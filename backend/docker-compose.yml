@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  alpr:
+    image: openalpr/openalpr
+    container_name: alpr
+    command: tail -f /dev/null
+    volumes:
+      - ./uploads:/uploads
+
+  api:
+    build: .
+    container_name: api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - alpr
+    volumes:
+      - ./uploads:/uploads

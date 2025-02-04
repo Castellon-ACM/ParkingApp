@@ -1,118 +1,99 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
+import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera";
+import axios from "axios";
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const API_URL = "http://localhost:8000/validar";
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const App = () => {
+  const [estadoCapturarFoto, setEstadoCapturarFoto] = useState<string | null>(null); // Estado para almacenar la foto capturada.
+  const { hasPermission, requestPermission } = useCameraPermission(); // Hook para manejar permisos de la cámara.
+  const device = useCameraDevice("back"); // Obtiene el dispositivo de cámara trasera.
+  const camaraRef = useRef<Camera>(null); // Referencia a la cámara para interactuar con ella.
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  useEffect(() => {
+    if (!hasPermission) {
+      requestPermission(); // Si no hay permiso, solicita permiso para acceder a la cámara.
+    }
+  }, [hasPermission]);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  // Función para capturar la foto.
+  const tomarFoto = async () => {
+    if (!camaraRef.current) return; // Si no hay cámara, no hace nada.
+    try {
+      const foto = await camaraRef.current.takePhoto(); // Toma una foto.
+      setEstadoCapturarFoto(foto.path); // Guarda la ruta de la foto capturada.
+    } catch (error) {
+      Alert.alert("Error", "No se pudo tomar la foto"); // Muestra un error si algo sale mal.
+    }
   };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+  // Función para subir la foto al servidor.
+  const subirFoto = async () => {
+    if (!estadoCapturarFoto) return; // Si no hay foto, no hace nada.
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+    const formatoImagen = new FormData();
+    formatoImagen.append("file", {
+      uri: `file://${estadoCapturarFoto}`, // Crea un objeto para enviar la imagen.
+      name: "matricula.jpg",
+      type: "image/jpeg",
+    } as any);
+
+    try {
+      const response = await axios.post(API_URL, formatoImagen, {
+        headers: { "Content-Type": "multipart/form-data" }, // Configura los headers para enviar un formulario con imagen.
+      });
+      Alert.alert("Resultado", response.data.estado); // Muestra el estado de la matrícula (permitida o denegada).
+    } catch (error) {
+      Alert.alert("Error", "No se pudo enviar la imagen"); // Muestra un error si no se puede enviar la imagen.
+    }
+  };
+
+  // Si no se tienen permisos para usar la cámara, muestra un mensaje solicitando permisos.
+  if (!hasPermission) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Solicitando permisos de cámara...</Text>
+      </View>
+    );
+  }
+
+  // Si no se detecta un dispositivo de cámara, muestra un mensaje de error.
+  if (!device) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>No se encontró la cámara</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      {estadoCapturarFoto ? ( // Si hay una foto capturada, muestra la imagen y opciones para tomar otra o enviarla.
+        <>
+          <Image source={{ uri: `file://${estadoCapturarFoto}` }} style={{ flex: 1 }} /> 
+          <TouchableOpacity onPress={() => setEstadoCapturarFoto(null)} style={{ padding: 20, backgroundColor: "red" }}>
+            <Text style={{ color: "white", textAlign: "center" }}>Tomar otra</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={subirFoto} style={{ padding: 20, backgroundColor: "green" }}>
+            <Text style={{ color: "white", textAlign: "center" }}>Enviar</Text>
+          </TouchableOpacity>
+        </>
+      ) : ( // Si no hay foto capturada, muestra la cámara para capturarla.
+        <Camera
+          ref={camaraRef} // Asocia la referencia a la cámara.
+          style={{ flex: 1 }}
+          device={device} // Usa el dispositivo de cámara trasera.
+          isActive={true} // Activa la cámara.
+          photo={true} // Habilita la captura de fotos.
+        >
+          <TouchableOpacity onPress={tomarFoto} style={{ position: "absolute", bottom: 50, alignSelf: "center", padding: 20, backgroundColor: "blue" }}>
+            <Text style={{ color: "white" }}>Tomar Foto</Text>
+          </TouchableOpacity>
+        </Camera>
+      )}
+    </View>
+  );
+};
 
 export default App;
