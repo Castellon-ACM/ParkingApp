@@ -71,7 +71,7 @@ const App = () => {
     <View style={{ flex: 1 }}>
       {estadoCapturarFoto ? ( // Si hay una foto capturada, muestra la imagen y opciones para tomar otra o enviarla.
         <>
-          <Image source={{ uri: `file://${estadoCapturarFoto}` }} style={{ flex: 1 }} /> 
+          <Image source={{ uri: `file://${estadoCapturarFoto}` }} style={{ flex: 1 }} />
           <TouchableOpacity onPress={() => setEstadoCapturarFoto(null)} style={{ padding: 20, backgroundColor: "red" }}>
             <Text style={{ color: "white", textAlign: "center" }}>Tomar otra</Text>
           </TouchableOpacity>
@@ -80,17 +80,29 @@ const App = () => {
           </TouchableOpacity>
         </>
       ) : ( // Si no hay foto capturada, muestra la cámara para capturarla.
-        <Camera
-          ref={camaraRef} // Asocia la referencia a la cámara.
-          style={{ flex: 1 }}
-          device={device} // Usa el dispositivo de cámara trasera.
-          isActive={true} // Activa la cámara.
-          photo={true} // Habilita la captura de fotos.
-        >
-          <TouchableOpacity onPress={tomarFoto} style={{ position: "absolute", bottom: 50, alignSelf: "center", padding: 20, backgroundColor: "blue" }}>
+        <View style={{ flex: 1, position:"relative" }}>
+          <Camera
+            ref={camaraRef}
+            style={{ flex: 1 }}
+            device={device}
+            isActive={true}
+            photo={true}
+          />
+          <TouchableOpacity
+            onPress={tomarFoto}
+            style={{
+              position: "absolute",
+              bottom: 50,
+              alignSelf: "center",
+              padding: 20,
+              backgroundColor: "blue",
+              zIndex: 10
+            }}
+          >
             <Text style={{ color: "white" }}>Tomar Foto</Text>
           </TouchableOpacity>
-        </Camera>
+        </View>
+
       )}
     </View>
   );
