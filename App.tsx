@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera";
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/validar";
+const API_URL = "http://192.168.56.1:8000/validar";
 
 const App = () => {
   const [estadoCapturarFoto, setEstadoCapturarFoto] = useState<string | null>(null); // Estado para almacenar la foto capturada.

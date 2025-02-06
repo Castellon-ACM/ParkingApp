@@ -1,8 +1,8 @@
 import admin from "firebase-admin";
 import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 
-// Inicializa el bucket de Firebase Storage
-const bucket = admin.storage().bucket("gs://TU_PROYECTO.appspot.com");
+// Inicializa el bucket de Firebase Storage con el nombre de tu proyecto
+const bucket = admin.storage().bucket("gs://controlarmatriculas.appspot.com");
 
 /**
  * Sube una imagen a Firebase Storage y devuelve la URL pública.
@@ -17,7 +17,7 @@ export const uploadImageToFirebase = async (filePath: string): Promise<string | 
       metadata: { contentType: "image/jpeg" },
     });
 
-    return `https://firebasestorage.googleapis.com/v0/b/TU_PROYECTO.appspot.com/o/${encodeURIComponent(fileName)}?alt=media`;
+    return `https://firebasestorage.googleapis.com/v0/b/controlarmatriculas.appspot.com/o/${encodeURIComponent(fileName)}?alt=media`;
   } catch (error) {
     console.error("Error subiendo imagen a Firebase:", error);
     return null;

@@ -49,5 +49,5 @@ app.post("/validar", upload.single("file"), async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
+  console.log(`Servidor corriendo en http://192.168.56.1:${port}`);
 });
